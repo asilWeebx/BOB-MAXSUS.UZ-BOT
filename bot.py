@@ -1,5 +1,5 @@
 import logging
-
+import datetime
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import InputFile
 # Logging sozlamalari
@@ -14,7 +14,8 @@ user_file = 'users.txt'
 user_contact = 'users_contact.txt'
 user_id_txt = 'id.txt'
 
-admin_id = 6620097375
+admin_id = [1663091854,6620097375]
+
 TOKEN = '6873674634:AAETBNP5VlOTb1xwOVSzJE-YdoC5nRXVC9o'
 
 bot = Bot(token=TOKEN)
@@ -33,9 +34,10 @@ class SEND_ID_txt(StatesGroup):
     waiting_send_id_txt = State()
 
 
+
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
-    if message.from_user.id == admin_id:
+    if message.from_user.id in admin_id:
         photo = open('images/ava1.jpg', 'rb')
         caption = f'Salom {message.from_user.full_name}-admin!\nBOBMAXSUS.UZ ning rasmiy botiga xush kelibsiz.'
         user_id = message.from_user.id
@@ -103,7 +105,7 @@ async def about(callback_query: types.CallbackQuery):
     button_xabar = InlineKeyboardButton('Xabar Yuborish💬', callback_data='users_xabar')
     button_id = InlineKeyboardButton('ID orqalik xabar yuborish🆔', callback_data='users_id')
     button_back = InlineKeyboardButton('Bosh menyu🔙', callback_data='back_admin')
-    keyboard.add(button_xabar, button_statistika, button_id, button_back)
+    keyboard.add(button_xabar, button_statistika, button_id,button_back)
     await bot.delete_message(chat_id=callback_query.from_user.id, message_id=callback_query.message.message_id)
     await bot.send_photo(user_id, photo=photo, caption=message_text, reply_markup=keyboard,
                          parse_mode=types.ParseMode.MARKDOWN)
@@ -127,7 +129,7 @@ async def process_id(message: types.Message, state: FSMContext):
     with open(user_id_txt, 'w') as file:
         file.write(str(text) + '\n')
         # Xabarni yuborish
-    await bot.send_message(admin_id,f'*{text} Foydalanuvchiga yubormoqchi bo\'gan xabaringizni kiriting...*',
+    await bot.send_message(message.chat.id,f'*{text} Foydalanuvchiga yubormoqchi bo\'gan xabaringizni kiriting...*',
                            parse_mode=types.ParseMode.MARKDOWN)
     await state.finish()
     await SEND_ID_txt.waiting_send_id_txt.set()
@@ -148,11 +150,12 @@ async def process_send(message: types.Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup(row_width=2)
     button_orqaga = InlineKeyboardButton('🔙Orqaga', callback_data='orqaga_admin_1')
     keyboard.add(button_orqaga)
-    await bot.send_message(admin_id, f'{user_ids} foydalanuvchiga ({text}) xabaringiz yetkazildi✅',
+    for i in admin_id:
+         await bot.send_message(i, f'{user_ids} foydalanuvchiga ({text}) xabaringiz yetkazildi✅',
                            parse_mode=types.ParseMode.MARKDOWN, reply_markup=keyboard)
     await state.finish()
 
-@dp.callback_query_handler(lambda c: c.data == 'statistika',)
+
 @dp.callback_query_handler(lambda c: c.data == 'statistika',)
 async def statistika(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
@@ -164,9 +167,9 @@ async def statistika(callback_query: types.CallbackQuery):
     total_users = len(user_ids)
     with open(user_contact, 'r') as file:
         user_ids_c = [str(line.strip()) for line in file]
-
     total_users_c = len(user_ids_c)
-    caption = f'BOBMAXSUS.UZ ning statistikasi\nFoydalanuvchilar soni: {total_users} ta\nBiz bilan bog\'langanlar soni: {total_users_c} ta'
+    user_info = len(admin_id)
+    caption = f'BOBMAXSUS.UZ ning statistikasi\nFoydalanuvchilar soni: {total_users} ta\nBiz bilan bog\'langanlar soni: {total_users_c} ta\nAdminlar soni: {user_info} ta'
     message_text = f"*{caption}*"
     keyboard = InlineKeyboardMarkup(row_width=2)
     button_file = InlineKeyboardButton('File 📁', callback_data='admin_file')
@@ -222,7 +225,8 @@ async def process_message(message: types.Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup(row_width=2)
     button_orqaga = InlineKeyboardButton('🔙Orqaga', callback_data='orqaga_admin_1')
     keyboard.add(button_orqaga)
-    await bot.send_message(admin_id,f'_Hamma foydalanuvchilarga_ *{text}* _xabaringiz yetqazildi_',
+    for i in admin_id:
+        await bot.send_message(i,f'_Hamma foydalanuvchilarga_ *{text}* _xabaringiz yetqazildi_',
                            parse_mode=types.ParseMode.MARKDOWN,reply_markup=keyboard)
     await state.finish()
 
@@ -253,12 +257,14 @@ async def process_message(message: types.Message, state: FSMContext):
     if 'biz bilan bog\'langaningizdan xursandmiz' in text.lower():
         pass
     else:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(user_contact, 'a') as file:
-            file.write(str(f'Username: @{user_name} || ID: ({user_id}) || qoldirilgan xabar: {text}') + '\n')
+            file.write(str(f'START TIME: {current_time} || Username: @{user_name} || ID: ({user_id}) || qoldirilgan xabar: {text}') + '\n')
         await bot.send_message(user_id, "*Sizning xabaringiz muvaffaqiyatli qabul qilindi! Javobni kuting⏰!*",
                                parse_mode=types.ParseMode.MARKDOWN)
         await state.finish()
-        await bot.send_message(admin_id,
+        for i in admin_id:
+            await bot.send_message(i,
                                    f"\n*🌐 BOB-MAXSUS.UZ bot foydalanuvchisi biz bilan bog'lanmoqchi\n👤Foydalanuvchi: \nTo'liq ismi: {ism}\nUsername: @{user_name} \nID: ({user_id}) \nXabari: {text} \n*",
                                    parse_mode=types.ParseMode.MARKDOWN)
 
@@ -343,6 +349,8 @@ async def go_back_admin(callback_query: types.CallbackQuery,state: FSMContext):
     await bot.send_photo(user_id, photo=photo, caption=message_text, reply_markup=keyboard,
                          parse_mode=types.ParseMode.MARKDOWN)
     await state.finish()
+
+
 @dp.callback_query_handler(lambda c: c.data == 'orqaga_admin_1')
 async def go_back_admin(callback_query: types.CallbackQuery):
     await bot.delete_message(chat_id=callback_query.from_user.id, message_id=callback_query.message.message_id)
@@ -355,7 +363,7 @@ async def go_back_admin(callback_query: types.CallbackQuery):
     button_xabar = InlineKeyboardButton('Xabar Yuborish💬', callback_data='users_xabar')
     button_id = InlineKeyboardButton('ID orqalik xabar yuborish🆔', callback_data='users_id')
     button_back = InlineKeyboardButton('Bosh menyu🔙', callback_data='back_admin')
-    keyboard.add(button_xabar, button_statistika, button_id,button_back)
+    keyboard.add(button_xabar, button_statistika, button_id, button_back)
     await bot.send_photo(user_id, photo=photo, caption=message_text, reply_markup=keyboard,
                          parse_mode=types.ParseMode.MARKDOWN)
 
